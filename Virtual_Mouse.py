@@ -61,7 +61,7 @@ def main():
 
         while True:
             _, frame = cap.read()
-            frame = cv2.flip(frame, 0)
+            frame = cv2.flip(frame, 1)
             image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = hands.process(image)
 
