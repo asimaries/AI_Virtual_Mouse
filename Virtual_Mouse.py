@@ -1,20 +1,18 @@
 import cv2
-import time
 import numpy as np
-import mediapipe as mp
+import mediapipe.python.solutions.drawing_utils as mp_draw
+import mediapipe.python.solutions.hands as mp_hands
 import math
-import autopy
+import autopy.mouse as automouse
+import autopy.screen as autoscreen
+import pyautogui
 
 width, height = 640, 480
-wScr, hScr = autopy.screen.size()
-
-cap = cv2.VideoCapture(1)
+wScr, hScr = autoscreen.size()
+cap = cv2.VideoCapture(0)
 cap.set(3, width)
 cap.set(4, height)
-
-mp_hands = mp.solutions.hands
-mp_draw = mp.solutions.drawing_utils
-
+pyautogui.FAILSAFE = False
 
 def get_X_Y(idlist):
     return idlist[1:]  # [4(thumb), 263(x), 298(y)]
@@ -65,7 +63,7 @@ def main():
             image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = hands.process(image)
 
-            tips = [4, 5, 8]
+            tips = [4, 5, 8, 10, 12]
             fingers = []
 
             if results.multi_hand_landmarks:
@@ -81,34 +79,42 @@ def main():
                 x1, y1 = get_X_Y(fingers[0])
                 x2, y2 = get_X_Y(fingers[1])
                 x3, y3 = get_X_Y(fingers[2])
+                x4, y4 = get_X_Y(fingers[3])
+                x5, y5 = get_X_Y(fingers[4])
                 cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
 
                 cv2.circle(frame, (x1, y1), 10, (255, 255, 0), 5)
                 cv2.circle(frame, (x2, y2), 10, (255, 255, 0), 5)
                 cv2.circle(frame, (x3, y3), 10, (255, 255, 0), 5)
+                cv2.circle(frame, (x5, y5), 10, (255, 255, 0), 5)
                 cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 0), 3)
                 length = math.hypot(x2 - x1, y2 - y1)
-
                 if 15 < length < 25:
                     cv2.circle(frame, (cx, cy), 3, (0, 0, 225), -1)
                     cv2.circle(frame, (cx, cy), 10, (0, 255, 255), 5)
-                    autopy.mouse.click()
+                    if y5 < y4 : 
+                        pyautogui.click(button="right")
+                    else:
+                        pyautogui.click()
 
-                cv2.rectangle(
-                    frame, (100, 100), (width - 100, height - 100), (0, 0, 255), 5
-                )
+                scrollen = math.hypot(x5 - x3, y5 - y3)
+                if scrollen < 20 and y5 < y4:
+                    pyautogui.scroll(30)
+                elif scrollen < 20:
+                    pyautogui.scroll(-30)
+                else:
+                    con_index_x = np.interp(x3, (100, width - 100), (0, wScr))
+                    con_index_y = np.interp(y3, (100, height - 100), (0, hScr))
 
-                con_index_x = np.interp(x3, (100, width - 100), (0, wScr))
-                con_index_y = np.interp(y3, (100, height - 100), (0, hScr))
-
-                currX = preX + (con_index_x - preX) / 10
-                currY = preY + (con_index_y - preY) / 10
-
-                autopy.mouse.move(currX, currY)
-                preX, preY = currX, currY
+                    currX = preX + (con_index_x - preX) / 13
+                    currY = preY + (con_index_y - preY) / 13
+                    automouse.move(currX, currY)
+                    preX, preY = currX, currY
+                    cv2.rectangle(
+                        frame, (100, 100), (width - 100, height - 100), (0, 0, 255), 5
+                    )
 
             frame = instruct(frame)
-
             cv2.imshow("AI Virtual Mouse", frame)
             if cv2.waitKey(10) == ord("x"):
                 break
