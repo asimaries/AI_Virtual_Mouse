@@ -1,6 +1,0 @@
-venv/Lib/site-packages/*
-venv/Lib/site-packages/__pycache__/*
-!venv/Lib/site-packages/__pycache__/
-!venv/Lib/site-packages/__pycache__/_virtualenv.cpython-37.pyc
-.vscode/
-
